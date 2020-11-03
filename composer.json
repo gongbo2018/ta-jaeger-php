@@ -1,0 +1,22 @@
+{
+    "name": "2345jiagou/ta-jaeger-php",
+    "authors": [
+        {
+            "name": "wanggc",
+            "email": "wanggc@2345.com"
+        }
+    ],
+    "require": {
+        "jukylin/jaeger-php": "9999999-dev",
+        "guzzlehttp/guzzle": "~7.0"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "TaJaeger\\": "src\\TaJaeger"
+        },
+        "files": [
+            "src/TaJaeger/Constants.php"
+        ]
+    }
+}
