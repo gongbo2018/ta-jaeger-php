@@ -13,10 +13,9 @@ class CreateTrace {
 
 
     public function __construct(){
-
     }
 
-    public function getJaegerAgentSVC(string $env) : string {
+    public static function getJaegerAgentSVC(string $env) : string {
         if (self::$agentHost != "") {
             return self::$agentHost;
         }
@@ -58,7 +57,6 @@ class CreateTrace {
         $tracer = $config->initTracer(self::$appName, self::getJaegerAgentSVC(self::$env));
         // 开始一个span
         $clientSpan = $tracer->startSpan(self::$appName);
-        print_r($clientSpan->getContext());
         // 把定义好的span数据注入到injectTarget
         $injectTarget = [];
         $tracer->inject($clientSpan->getContext(), Formats\TEXT_MAP, $injectTarget);
@@ -70,7 +68,6 @@ class CreateTrace {
         $client = new Client();
         // 发送请求
         $res = $client->request($method, $url,['headers' => $injectTarget]);
-        print_r($res);
 
         $clientSpan->setTag('http.status_code', 200);
         $clientSpan->setTag('http.method', 'GET');
