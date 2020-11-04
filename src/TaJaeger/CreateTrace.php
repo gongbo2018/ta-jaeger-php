@@ -2,7 +2,6 @@
 namespace TaJaeger;
 
 use Jaeger\Config;
-use GuzzleHttp\Client;
 use OpenTracing\Formats;
 
 class CreateTrace {
@@ -15,7 +14,13 @@ class CreateTrace {
     public function __construct(){
     }
 
-    public static function getJaegerAgentSVC(string $env) : string {
+    /**
+     * 获取提供服务主机
+     *
+     * @param string $env
+     * @return string
+     */
+    public static function getJaegerAgentSVC(string $env) {
         if (self::$agentHost != "") {
             return self::$agentHost;
         }
@@ -37,12 +42,26 @@ class CreateTrace {
         return self::$agentHost;
     }
 
-    public function loadConfig(string $env, string $appName) {
+    /**
+     * 初始化配置文件
+     *
+     * @param string $env
+     * @param string $appName
+     */
+    public static function loadConfig(string $env, string $appName) {
         self::$appName = $appName;
         self::$env = $env;
     }
 
-    public static function uploadData(array $server)
+    /**
+     * @param string $spanName
+     * @param array $tag [key => val]
+     * @param array $log [key => val]
+     * @return CreateTrace|null
+     *
+     * @throws \Exception
+     */
+    public static function uploadData(string $spanName, array $tag = [], array $log = [])
     {
         if(! (self::$instance instanceof self) )
         {
@@ -55,25 +74,32 @@ class CreateTrace {
 
         // 初始化链路
         $tracer = $config->initTracer(self::$appName, self::getJaegerAgentSVC(self::$env));
-        // 开始一个span
-        $clientSpan = $tracer->startSpan(self::$appName);
-        // 把定义好的span数据注入到injectTarget
-        $injectTarget = [];
-        $tracer->inject($clientSpan->getContext(), Formats\TEXT_MAP, $injectTarget);
 
-        $method = 'GET';
-        $url = 'http://testtracing/'; // 服务端URL
+        // 展开span
+        $spanContext = null;
+        $all_header = getallheaders();
+        $spanContext = $tracer->extract(Formats\TEXT_MAP, $all_header);
 
-        // 定义一个client
-        $client = new Client();
-        // 发送请求
-        $res = $client->request($method, $url,['headers' => $injectTarget]);
+        if ($spanContext != null) {
+            $clientSpan = $tracer->startSpan($spanName, ['child_of' => $spanContext]);
+        } else {
+            $clientSpan = $tracer->startSpan($spanName);
+        }
 
-        $clientSpan->setTag('http.status_code', 200);
-        $clientSpan->setTag('http.method', 'GET');
-        $clientSpan->setTag('http.url', $url);
+        // 赋值tag
+        if (!empty($tag)) {
+            foreach ($tag as $k => $v) {
+                $clientSpan->setTag($k, $v);
+            }
+        }
 
-        $clientSpan->log(['message' => "HTTP1 ". $method .' '. $url .' end !']);
+        // 赋值log
+        if (!empty($log)) {
+            foreach ($log as $k => $v) {
+                $clientSpan->log([$k => $v]);
+            }
+        }
+
         // 结束client span内容
         $clientSpan->finish();
 
@@ -82,4 +108,5 @@ class CreateTrace {
 
         return self::$instance;
     }
+
 }

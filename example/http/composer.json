@@ -1,0 +1,16 @@
+{
+    "name": "wanggc/test-composer",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "wanggc",
+            "email": "wanggc@2345.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "2345jiagou/ta-jaeger-php": "dev-main"
+    },
+    "description": "测试调用"
+}
