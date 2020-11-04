@@ -2,6 +2,7 @@
 namespace TaJaeger;
 
 use Jaeger\Config;
+use Jaeger\Constants;
 use OpenTracing\Formats;
 
 class CreateTrace {
@@ -57,11 +58,12 @@ class CreateTrace {
      * @param string $spanName
      * @param array $tag [key => val]
      * @param array $log [key => val]
+     * @param array $spanData [key => val]
      * @return CreateTrace|null
      *
      * @throws \Exception
      */
-    public static function uploadData(string $spanName, array $tag = [], array $log = [])
+    public static function uploadData(string $spanName, array $tag = [], array $log = [], array $spanData = [])
     {
         if(! (self::$instance instanceof self) )
         {
@@ -78,6 +80,11 @@ class CreateTrace {
         // 展开span
         $spanContext = null;
         $all_header = getallheaders();
+        // 设定span链路数据
+        if (!empty($spanData)) {
+            $spanStr = implode(" ",$spanData);
+            $all_header[strtoupper(Constants\Tracer_State_Header_Name)] = $spanStr;
+        }
         $spanContext = $tracer->extract(Formats\TEXT_MAP, $all_header);
 
         if ($spanContext != null) {
